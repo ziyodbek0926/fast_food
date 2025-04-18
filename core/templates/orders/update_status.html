@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Buyurtma holatini o'zgartirish - Fast Food Admin{% endblock %}
+
+{% block header %}Buyurtma holatini o'zgartirish #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="status" class="form-label">Holat</label>
+                <select class="form-select" id="status" name="status" required>
+                    <option value="new" {% if order.status == 'new' %}selected{% endif %}>Yangi</option>
+                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Tasdiqlangan</option>
+                    <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Tayyorlanmoqda</option>
+                    <option value="ready" {% if order.status == 'ready' %}selected{% endif %}>Tayyor</option>
+                    <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Yetkazilgan</option>
+                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Bekor qilingan</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+            <a href="{% url 'order_detail' order.id %}" class="btn btn-secondary">Bekor qilish</a>
+        </form>
+    </div>
+</div>
+{% endblock %} 

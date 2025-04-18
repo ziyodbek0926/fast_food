@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Product - Fast Food Admin{% endblock %}
+
+{% block header %}Create Product{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name_uz" class="form-label">Name (Uzbek)</label>
+                <input type="text" class="form-control" id="name_uz" name="name_uz" required>
+            </div>
+            <div class="mb-3">
+                <label for="name_ru" class="form-label">Name (Russian)</label>
+                <input type="text" class="form-control" id="name_ru" name="name_ru" required>
+            </div>
+            <div class="mb-3">
+                <label for="description_uz" class="form-label">Description (Uzbek)</label>
+                <textarea class="form-control" id="description_uz" name="description_uz" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="description_ru" class="form-label">Description (Russian)</label>
+                <textarea class="form-control" id="description_ru" name="description_ru" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    <option value="">Select Category</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name_uz }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Image</label>
+                <input type="file" class="form-control" id="image" name="image">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="is_available" name="is_available" checked>
+                <label class="form-check-label" for="is_available">Available</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Product</button>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %} 

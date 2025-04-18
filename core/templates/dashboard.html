@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Bosh sahifa - Fast Food Admin{% endblock %}
+
+{% block header %}Bosh sahifa{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Foydalanuvchilar</h5>
+                <p class="card-text display-4">{{ total_users }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Buyurtmalar</h5>
+                <p class="card-text display-4">{{ total_orders }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Daromad</h5>
+                <p class="card-text display-4">{{ total_revenue|floatformat:2 }} so'm</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">So'nggi buyurtmalar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Foydalanuvchi</th>
+                                <th>Summa</th>
+                                <th>Holat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.user.username }}</td>
+                                <td>{{ order.total_price|floatformat:2 }} so'm</td>
+                                <td>
+                                    <span class="badge bg-{{ order.status|yesno:'success,danger' }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Buyurtmalar mavjud emas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Mashhur mahsulotlar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nomi</th>
+                                <th>Kategoriya</th>
+                                <th>Buyurtmalar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in popular_products %}
+                            <tr>
+                                <td>{{ product.name_uz }}</td>
+                                <td>{{ product.category.name_uz }}</td>
+                                <td>{{ product.order_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">Mahsulotlar mavjud emas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Product{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Update Product</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-edit me-1"></i>
+            Edit Product Information
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name_uz">Name (UZ)</label>
+                            <input type="text" class="form-control" id="name_uz" name="name_uz" 
+                                   value="{{ product.name_uz }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name_ru">Name (RU)</label>
+                            <input type="text" class="form-control" id="name_ru" name="name_ru" 
+                                   value="{{ product.name_ru }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="description_uz">Description (UZ)</label>
+                            <textarea class="form-control" id="description_uz" name="description_uz" 
+                                      rows="3" required>{{ product.description_uz }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="description_ru">Description (RU)</label>
+                            <textarea class="form-control" id="description_ru" name="description_ru" 
+                                      rows="3" required>{{ product.description_ru }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select class="form-control" id="category" name="category" required>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" 
+                                        {% if category.id == product.category.id %}selected{% endif %}>
+                                    {{ category.name_uz }} / {{ category.name_ru }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="price">Price</label>
+                            <input type="number" class="form-control" id="price" name="price" 
+                                   value="{{ product.price }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="image">Image</label>
+                            <input type="file" class="form-control" id="image" name="image">
+                            {% if product.image %}
+                            <small class="form-text text-muted">
+                                Current image: <a href="{{ product.image.url }}" target="_blank">View</a>
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="is_available" name="is_available" 
+                           {% if product.is_available %}checked{% endif %}>
+                    <label class="form-check-label" for="is_available">Available</label>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'product_detail' product.id %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

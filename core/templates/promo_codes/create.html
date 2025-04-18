@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Promo kod yaratish - Fast Food Admin{% endblock %}
+
+{% block header %}Promo kod yaratish{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="code" class="form-label">Kod</label>
+                <input type="text" class="form-control" id="code" name="code" required>
+            </div>
+            <div class="mb-3">
+                <label for="discount_percent" class="form-label">Chegirma foiz</label>
+                <input type="number" class="form-control" id="discount_percent" name="discount_percent" min="1" max="100" required>
+            </div>
+            <div class="mb-3">
+                <label for="valid_from" class="form-label">Boshlanish sanasi</label>
+                <input type="datetime-local" class="form-control" id="valid_from" name="valid_from" required>
+            </div>
+            <div class="mb-3">
+                <label for="valid_to" class="form-label">Tugash sanasi</label>
+                <input type="datetime-local" class="form-control" id="valid_to" name="valid_to" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                <label class="form-check-label" for="is_active">Faol</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Promo kod yaratish</button>
+            <a href="{% url 'promo_code_list' %}" class="btn btn-secondary">Bekor qilish</a>
+        </form>
+    </div>
+</div>
+{% endblock %} 

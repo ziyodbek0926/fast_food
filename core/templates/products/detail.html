@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ product.name_uz }} - Product Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Product Details</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-cube me-1"></i>
+                Product Information
+            </div>
+            <div>
+                <a href="{% url 'product_update' product.id %}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'product_delete' product.id %}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name_uz }}" class="img-fluid rounded">
+                    {% else %}
+                        <div class="alert alert-info">No image available</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <table class="table">
+                        <tr>
+                            <th style="width: 200px;">ID:</th>
+                            <td>#{{ product.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Name (UZ):</th>
+                            <td>{{ product.name_uz }}</td>
+                        </tr>
+                        <tr>
+                            <th>Name (RU):</th>
+                            <td>{{ product.name_ru }}</td>
+                        </tr>
+                        <tr>
+                            <th>Category:</th>
+                            <td>{{ product.category.name_uz }} / {{ product.category.name_ru }}</td>
+                        </tr>
+                        <tr>
+                            <th>Price:</th>
+                            <td>${{ product.price|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <span class="badge bg-{{ product.is_available|yesno:'success,danger' }}">
+                                    {{ product.is_available|yesno:'Available,Unavailable' }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="mt-4">
+                        <h5>Description (UZ):</h5>
+                        <p>{{ product.description_uz }}</p>
+                        
+                        <h5>Description (RU):</h5>
+                        <p>{{ product.description_ru }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-shopping-cart me-1"></i>
+            Recent Orders
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Quantity</th>
+                        <th>Price per Item</th>
+                        <th>Total Price</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    {% with items=order_items|get_item:order.id %}
+                    {% for item in items %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.user.first_name }} {{ order.user.last_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.price|floatformat:2 }}</td>
+                        <td>${{ item.price|multiply:item.quantity|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge bg-{{ order.status_color }}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td>{{ order.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'order_detail' order.id %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No orders found for this product</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

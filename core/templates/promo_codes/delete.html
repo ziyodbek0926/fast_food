@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Promo kodni o'chirish - Fast Food Admin{% endblock %}
+
+{% block header %}Promo kodni o'chirish{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Promo kodni o'chirish</h5>
+        <p class="card-text">
+            Haqiqatan ham <strong>{{ promo_code.code }}</strong> promo kodini o'chirmoqchimisiz?
+            Bu amalni qaytarib bo'lmaydi.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> O'chirish
+            </button>
+            <a href="{% url 'promo_code_detail' promo_code.id %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Bekor qilish
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %} 

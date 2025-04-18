@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Hisobotlar - Fast Food Admin{% endblock %}
+
+{% block header %}Hisobotlar{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Kunlik hisobot</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="date" class="form-label">Sana</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ date|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">Ko'rsatish</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="table-responsive">
+                    <table class="table">
+                        <tr>
+                            <th>Buyurtmalar soni</th>
+                            <td>{{ daily_stats.orders_count }}</td>
+                        </tr>
+                        <tr>
+                            <th>Jami summa</th>
+                            <td>{{ daily_stats.total_amount|floatformat:2 }} so'm</td>
+                        </tr>
+                        <tr>
+                            <th>O'rtacha buyurtma</th>
+                            <td>{{ daily_stats.average_order|floatformat:2 }} so'm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Oylik hisobot</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="month" class="form-label">Oy</label>
+                                <input type="month" class="form-control" id="month" name="month" value="{{ month|date:'Y-m' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">Ko'rsatish</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="table-responsive">
+                    <table class="table">
+                        <tr>
+                            <th>Buyurtmalar soni</th>
+                            <td>{{ monthly_stats.orders_count }}</td>
+                        </tr>
+                        <tr>
+                            <th>Jami summa</th>
+                            <td>{{ monthly_stats.total_amount|floatformat:2 }} so'm</td>
+                        </tr>
+                        <tr>
+                            <th>O'rtacha buyurtma</th>
+                            <td>{{ monthly_stats.average_order|floatformat:2 }} so'm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Mashhur mahsulotlar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mahsulot</th>
+                                <th>Kategoriya</th>
+                                <th>Sotilgan soni</th>
+                                <th>Jami summa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in popular_products %}
+                            <tr>
+                                <td>{{ product.name_uz }}</td>
+                                <td>{{ product.category.name_uz }}</td>
+                                <td>{{ product.orders_count }}</td>
+                                <td>{{ product.total_amount|floatformat:2 }} so'm</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Ma'lumotlar mavjud emas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Kategoriya yaratish - Fast Food Admin{% endblock %}
+
+{% block header %}Kategoriya yaratish{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name_uz" class="form-label">Nomi (O'zbek)</label>
+                <input type="text" class="form-control" id="name_uz" name="name_uz" required>
+            </div>
+            <div class="mb-3">
+                <label for="name_ru" class="form-label">Nomi (Rus)</label>
+                <input type="text" class="form-control" id="name_ru" name="name_ru" required>
+            </div>
+            <div class="mb-3">
+                <label for="description_uz" class="form-label">Tavsif (O'zbek)</label>
+                <textarea class="form-control" id="description_uz" name="description_uz" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="description_ru" class="form-label">Tavsif (Rus)</label>
+                <textarea class="form-control" id="description_ru" name="description_ru" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Rasmlar</label>
+                <input type="file" class="form-control" id="image" name="image">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                <label class="form-check-label" for="is_active">Faol</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Kategoriya yaratish</button>
+            <a href="{% url 'category_list' %}" class="btn btn-secondary">Bekor qilish</a>
+        </form>
+    </div>
+</div>
+{% endblock %} 

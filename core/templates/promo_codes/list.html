@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Promo kodlar - Fast Food Admin{% endblock %}
+
+{% block header %}
+<div class="d-flex justify-content-between align-items-center">
+    <h1 class="h3 mb-0">Promo kodlar</h1>
+    <a href="{% url 'promo_code_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Yangi promo kod
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Kod</th>
+                        <th>Chegirma</th>
+                        <th>Boshlanish sanasi</th>
+                        <th>Tugash sanasi</th>
+                        <th>Holat</th>
+                        <th>Harakatlar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for promo_code in promo_codes %}
+                    <tr>
+                        <td>{{ promo_code.id }}</td>
+                        <td>{{ promo_code.code }}</td>
+                        <td>{{ promo_code.discount_percent }}%</td>
+                        <td>{{ promo_code.valid_from|date:"d.m.Y H:i" }}</td>
+                        <td>{{ promo_code.valid_to|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <span class="badge {% if promo_code.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if promo_code.is_active %}Faol{% else %}Nofaol{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'promo_code_detail' promo_code.id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'promo_code_update' promo_code.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'promo_code_delete' promo_code.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">Promo kodlar mavjud emas</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

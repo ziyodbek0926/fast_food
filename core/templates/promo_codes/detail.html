@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Promo kod - Fast Food Admin{% endblock %}
+
+{% block header %}
+<div class="d-flex justify-content-between align-items-center">
+    <h1 class="h3 mb-0">Promo kod ma'lumotlari</h1>
+    <div>
+        <a href="{% url 'promo_code_update' promo_code.id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Tahrirlash
+        </a>
+        <a href="{% url 'promo_code_delete' promo_code.id %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> O'chirish
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Asosiy ma'lumotlar</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>ID</th>
+                        <td>{{ promo_code.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Kod</th>
+                        <td>{{ promo_code.code }}</td>
+                    </tr>
+                    <tr>
+                        <th>Chegirma</th>
+                        <td>{{ promo_code.discount_percent }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Boshlanish sanasi</th>
+                        <td>{{ promo_code.valid_from|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Tugash sanasi</th>
+                        <td>{{ promo_code.valid_to|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Holat</th>
+                        <td>
+                            <span class="badge {% if promo_code.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if promo_code.is_active %}Faol{% else %}Nofaol{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Yaratilgan sana</th>
+                        <td>{{ promo_code.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Buyurtmalar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Foydalanuvchi</th>
+                                <th>Summa</th>
+                                <th>Sana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in promo_code.orders.all %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.user.username }}</td>
+                                <td>{{ order.total_price|floatformat:2 }} so'm</td>
+                                <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Buyurtmalar mavjud emas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

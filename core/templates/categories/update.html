@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Kategoriya tahrirlash - {{ category.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Kategoriya tahrirlash</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-edit me-1"></i>
+            Kategoriya ma'lumotlarini tahrirlash
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name_uz">Nomi (O'zbek)</label>
+                            <input type="text" class="form-control" id="name_uz" name="name_uz" value="{{ category.name_uz }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name_ru">Nomi (Rus)</label>
+                            <input type="text" class="form-control" id="name_ru" name="name_ru" value="{{ category.name_ru }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="description_uz">Tavsif (O'zbek)</label>
+                            <textarea class="form-control" id="description_uz" name="description_uz" rows="3">{{ category.description_uz }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="description_ru">Tavsif (Rus)</label>
+                            <textarea class="form-control" id="description_ru" name="description_ru" rows="3">{{ category.description_ru }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="image">Kategoriya rasmi</label>
+                            <input type="file" class="form-control" id="image" name="image">
+                            {% if category.image %}
+                                <div class="mt-2">
+                                    <img src="{{ category.image.url }}" alt="{{ category.name_uz }}" class="img-thumbnail" style="max-width: 200px;">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if category.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">Faol</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> O'zgartirish
+                    </button>
+                    <a href="{% url 'category_detail' category.id %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Bekor qilish
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

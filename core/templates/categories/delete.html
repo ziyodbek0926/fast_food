@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Kategoriyani o'chirish - Fast Food Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Kategoriyani o'chirish</h4>
+                </div>
+                <div class="card-body">
+                    <p class="alert alert-danger">
+                        Siz rostdan ham <strong>{{ category.name_uz }}</strong> kategoriyasini o'chirmoqchimisiz?
+                        Bu amalni qaytarib bo'lmaydi.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'category_detail' category.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Orqaga
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Ha, o'chirish
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
