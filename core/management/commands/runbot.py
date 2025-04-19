@@ -557,14 +557,12 @@ async def handle_product_callback(callback_query: types.CallbackQuery):
         ]
     ])
 
-    # Add product image if available
+    # Send product details with photo if available
     if product.image and product.image.url:
         try:
             # Get the full URL by combining MEDIA_URL and image path
             # image_url = f"{settings.DOMAIN}{product.image.url}"
-            print(product.name_uz)
-            photo = FSInputFile(f'/home/ziko2/fast_food/media/products/{product.name_uz}.jpg')
-            await bot.delete_message(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id)
+            photo = FSInputFile(f'/home/ziko2/Desktop/fast_food/img/{product.name_uz}.jpg')
             await callback_query.message.answer_photo(
                 photo=photo,
                 caption=text,
@@ -935,15 +933,17 @@ async def handle_product(message: types.Message):
     if product.image and product.image.url:
         try:
             # Get the full URL by combining MEDIA_URL and image path
-            image_url = f"{settings.DOMAIN}{product.image.url}"
+            # image_url = f"{settings.DOMAIN}{product.image.url}"
+            photo = FSInputFile(f'/home/ziko2/Desktop/fast_food/img/{product.name_uz}.jpg')
             await message.answer_photo(
-                photo=image_url,
+                photo=photo,
                 caption=text,
                 reply_markup=keyboard,
                 parse_mode="HTML"
             )
         except Exception as e:
             # If there's an error with the image, just send the text
+            print(e)
             await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
     else:
         await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
@@ -1001,15 +1001,29 @@ async def handle_add_to_cart(callback_query: types.CallbackQuery):
         else:
             text = f"{product.name_ru} добавлен в корзину!"
 
-        await callback_query.message.edit_text(text, reply_markup=keyboard)
+        # Check if the message is a photo message
+        if callback_query.message.photo:
+            # For photo messages, send a new message instead of editing
+            await callback_query.message.answer(text, reply_markup=keyboard)
+        else:
+            # For text messages, edit the existing message
+            await callback_query.message.edit_text(text, reply_markup=keyboard)
+            
         await callback_query.answer()
     except Exception as e:
         logging.error(f"Error adding to cart: {str(e)}")
         if lang_code == "uz":
-            await callback_query.message.edit_text("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
+            # For photo messages, send a new message instead of editing
+            if callback_query.message.photo:
+                await callback_query.message.answer("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
+            else:
+                await callback_query.message.edit_text("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
         else:
-            await callback_query.message.edit_text("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
-        await callback_query.answer()
+            # For photo messages, send a new message instead of editing
+            if callback_query.message.photo:
+                await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
+            else:
+                await callback_query.message.edit_text("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
 
 @dp.callback_query(lambda c: c.data == "view_cart")
 async def handle_view_cart(callback_query: types.CallbackQuery):
