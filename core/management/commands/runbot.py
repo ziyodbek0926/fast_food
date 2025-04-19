@@ -7,6 +7,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 import logging
 import sys
+import os, time
+from dotenv import load_dotenv
 from core.models import Category, Product, TelegramUser, Order, OrderItem, Language, CartItem
 from django.db.models import Q
 from asgiref.sync import sync_to_async
@@ -14,8 +16,17 @@ from asgiref.sync import sync_to_async
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Initialize bot and dispatcher
-bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+# Load environment variables with override=True to ensure we get the latest values
+load_dotenv(override=True)
+
+# Get the bot token from environment variables
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+# print(BOT_TOKEN)
+if not BOT_TOKEN:
+    logging.error("BOT_TOKEN not found in environment variables. Please check your .env file.")
+    sys.exit(1)
+
+# Initialize bot and dispatche
 dp = Dispatcher()
 
 # Language selection keyboard
@@ -298,9 +309,17 @@ async def handle_category(callback_query: types.CallbackQuery):
 
         if not products:
             if lang_code == "uz":
-                await callback_query.message.edit_text(f"{category.name_uz} kategoriyasida hozircha mahsulotlar mavjud emas.")
+                text = f"{category.name_uz} kategoriyasida hozircha mahsulotlar mavjud emas."
             else:
-                await callback_query.message.edit_text(f"В категории {category.name_ru} пока нет доступных продуктов.")
+                text = f"В категории {category.name_ru} пока нет доступных продуктов."
+            
+            # Check if the message is a photo message
+            if callback_query.message.photo:
+                # For photo messages, send a new message instead of editing
+                await callback_query.message.answer(text)
+            else:
+                # For text messages, edit the existing message
+                await callback_query.message.edit_text(text)
             return
 
         # Create keyboard based on language
@@ -311,15 +330,93 @@ async def handle_category(callback_query: types.CallbackQuery):
             text = f"{category.name_uz} kategoriyasidagi mahsulotlar:"
         else:
             text = f"Продукты категории {category.name_ru}:"
-
-        await callback_query.message.edit_text(text, reply_markup=keyboard)
+        
+        # Check if the message is a photo message
+        if callback_query.message.photo:
+            # For photo messages, send a new message instead of editing
+            await callback_query.message.answer(text, reply_markup=keyboard)
+        else:
+            # For text messages, edit the existing message
+            await callback_query.message.edit_text(text, reply_markup=keyboard)
+            
         await callback_query.answer()
+        
+        # Delete the message immediat
+        # await asyncio.sleep(7)
+        # await callback_query.message.delete()
     except Exception as e:
         logging.error(f"Error in handle_category: {str(e)}")
         if lang_code == "uz":
             await callback_query.message.edit_text("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
         else:
             await callback_query.message.edit_text("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
+        await callback_query.answer()
+
+
+@dp.callback_query(lambda c: c.data in ["back_to_products"])
+async def handle_back(callback_query: types.CallbackQuery, bot: Bot):
+    category_id = int(1)
+    
+    # Get user's language from memory or default to 'uz'
+    lang_code = user_languages.get(callback_query.from_user.id, 'uz')
+
+    try:
+        # Get category and its products using sync_to_async
+        get_category = sync_to_async(Category.objects.get)
+        get_products = sync_to_async(lambda: list(Product.objects.filter(category_id=category_id, is_available=True)))
+        
+        category = await get_category(id=category_id)
+        products = await get_products()
+
+        if not products:
+            if lang_code == "uz":
+                text = f"{category.name_uz} kategoriyasida hozircha mahsulotlar mavjud emas."
+            else:
+                text = f"В категории {category.name_ru} пока нет доступных продуктов."
+            
+            # Check if the message is a photo message
+            if callback_query.message.photo:
+                # For photo messages, send a new message instead of editing
+                await callback_query.message.answer(text)
+            else:
+                # For text messages, edit the existing message
+                await callback_query.message.edit_text(text)
+            return
+
+        # Create keyboard based on language
+        keyboard = get_products_keyboard(products, lang_code)
+
+        # Send message based on language
+        if lang_code == "uz":
+            text = f"{category.name_uz} kategoriyasidagi mahsulotlar:"
+        else:
+            text = f"Продукты категории {category.name_ru}:"
+        await callback_query.message.delete()
+        # Check if the message is a photo message
+        if callback_query.message.photo:
+            # For photo messages, send a new message instead of editing
+            await callback_query.message.answer(text, reply_markup=keyboard)
+        else:
+            # For text messages, edit the existing message
+            await callback_query.message.edit_text(text, reply_markup=keyboard)
+            
+        await callback_query.answer()
+        # await callback_query.message.delete()
+    except Exception as e:
+        logging.error(f"Error in handle_back: {str(e)}")
+        if lang_code == "uz":
+            error_text = "Xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
+        else:
+            error_text = "Произошла ошибка. Пожалуйста, попробуйте еще раз."
+            
+        # Check if the message is a photo message
+        if callback_query.message.photo:
+            # For photo messages, send a new message instead of editing
+            await callback_query.message.answer(error_text)
+        else:
+            # For text messages, edit the existing message
+            await callback_query.message.edit_text(error_text)
+            
         await callback_query.answer()
 
 @dp.message(lambda message: message.text in ["🛒 Savat", "🛒 Корзина"])
@@ -556,6 +653,9 @@ async def handle_product_callback(callback_query: types.CallbackQuery):
             )
         ]
     ])
+
+    # Delete the previous products list message
+    await callback_query.message.delete()
 
     # Send product details with photo if available
     if product.image and product.image.url:
@@ -996,6 +1096,8 @@ async def handle_add_to_cart(callback_query: types.CallbackQuery):
             ]
         ])
 
+        await callback_query.message.delete()
+
         if lang_code == "uz":
             text = f"{product.name_uz} savatga qo'shildi!"
         else:
@@ -1176,6 +1278,16 @@ async def handle_back_to_categories(callback_query: types.CallbackQuery):
 
 async def main():
     logging.info("Starting bot...")
+    # Reload environment variables before starting the bot
+    load_dotenv(override=True)
+    # Get the latest bot token
+    global bot
+    BOT_TOKEN = os.getenv('BOT_TOKEN')
+    if not BOT_TOKEN:
+        logging.error("BOT_TOKEN not found in environment variables. Please check your .env file.")
+        return
+    # Create a new bot instance with the latest token
+    bot = Bot(token=BOT_TOKEN)
     await dp.start_polling(bot)
 
 class Command(BaseCommand):
