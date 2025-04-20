@@ -8,9 +8,10 @@ from core.models import TelegramUser, Language
 
 router = Router()
 
+# /start buyrug'ini qayta ishlash
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
-    # Check if user exists
+    # Foydalanuvchi mavjudligini tekshirish
     user, created = await TelegramUser.objects.aget_or_create(
         user_id=message.from_user.id,
         defaults={
@@ -20,26 +21,28 @@ async def cmd_start(message: Message, state: FSMContext):
         }
     )
 
-    # Send language selection keyboard
+    # Til tanlash klaviaturasini yuborish
     await message.answer(
         "Please select your language:\n\n"
         "Iltimos, tilni tanlang:",
         reply_markup=get_language_keyboard()
     )
 
+# Til tanlashni qayta ishlash
 @router.callback_query(F.data.startswith("lang_"))
 async def process_language_selection(callback: CallbackQuery, state: FSMContext):
+    # Tanlangan til kodini olish
     lang_code = callback.data.split("_")[1]
     
-    # Get language object
+    # Til obyektini olish
     language = await Language.objects.aget(code=lang_code)
     
-    # Update user's language
+    # Foydalanuvchi tilini yangilash
     user = await TelegramUser.objects.aget(user_id=callback.from_user.id)
     user.language = language
     await user.asave()
 
-    # Send welcome message in selected language
+    # Tanlangan tilda xabar yuborish
     if lang_code == "uz":
         welcome_text = (
             "Assalomu alaykum! Fast Food botiga xush kelibsiz.\n\n"

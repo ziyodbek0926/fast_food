@@ -13,4 +13,5 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'admin_panel.settings')
 
+# Django ilovasining WSGI interfeysini yaratadi. Bu interfeys web serverlar bilan Django ilovasini bog'lash uchun ishlatiladi
 application = get_wsgi_application()

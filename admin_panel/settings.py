@@ -13,24 +13,19 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Loyihaning asosiy papkasini aniqlaydi
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# Django ilovasi uchun maxfiy kalit
 SECRET_KEY = 'django-insecure-5hknen^q19c8m=h5##o*m3!_-)mm%aqlf@c(^gvpc-^ix9ia-$'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Debug rejimini yoqish/o'chirish
 DEBUG = True
 
+# Ruxsat etilgan hostlar ro'yxati
 ALLOWED_HOSTS = []
 
-
-# Application definition
-
+# O'rnatilgan ilovalar ro'yxati
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,6 +39,7 @@ INSTALLED_APPS = [
     'bot',
 ]
 
+# Middleware komponentlari ro'yxati
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -54,8 +50,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Asosiy URL konfiguratsiyasi
 ROOT_URLCONF = 'admin_panel.urls'
 
+# Shablonlar sozlamalari
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -72,12 +70,10 @@ TEMPLATES = [
     },
 ]
 
+# WSGI ilovasi
 WSGI_APPLICATION = 'admin_panel.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
+# Ma'lumotlar bazasi sozlamalari
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -85,10 +81,7 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
+# Parol tekshirish qoidalari
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -104,45 +97,34 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
+# Til va vaqt sozlamalari
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
+# Statik fayllar uchun sozlamalar
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'core/static'),
 ]
 
-# Media files
+# Media fayllar uchun sozlamalar
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Crispy Forms
+# Crispy Forms sozlamalari
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
+# Asosiy kalit maydon turi
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Login settings
+# Autentifikatsiya sozlamalari
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'
 
-# Telegram Bot settings
-TELEGRAM_BOT_TOKEN = '7974399354:AAGUZsP-Uh6QQkcnHFOSldIgxA4mYs6e3i0'  # Replace with your actual bot token
+# Telegram Bot sozlamalari
+TELEGRAM_BOT_TOKEN = '7974399354:AAGUZsP-Uh6QQkcnHFOSldIgxA4mYs6e3i0'  # Bot tokenini o'zgartiring

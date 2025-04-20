@@ -20,6 +20,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    # Django admin panelining URL manzillarini boshqaradi
     path('admin/', admin.site.urls),
+    # core ilovasining URL manzillarini asosiy URL konfiguratsiyasiga qo'shadi
     path('', include('core.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # Media fayllar uchun URL manzillarni sozlaydi

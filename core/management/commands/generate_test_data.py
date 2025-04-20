@@ -6,21 +6,24 @@ import random
 from faker import Faker
 from datetime import timedelta
 
+# Faker kutubxonasini ishga tushirish
 fake = Faker()
 
+# Test ma'lumotlarini yaratish uchun buyruq
 class Command(BaseCommand):
-    help = 'Generates test data for the database'
+    help = 'Ma\'lumotlar bazasi uchun test ma\'lumotlarini yaratadi'
 
     def add_arguments(self, parser):
-        parser.add_argument('--users', type=int, default=5, help='Number of users to create')
-        parser.add_argument('--categories', type=int, default=3, help='Number of categories to create')
-        parser.add_argument('--products', type=int, default=10, help='Number of products to create')
-        parser.add_argument('--orders', type=int, default=15, help='Number of orders to create')
+        # Buyruq parametrlarini qo'shish
+        parser.add_argument('--users', type=int, default=5, help='Yaratiladigan foydalanuvchilar soni')
+        parser.add_argument('--categories', type=int, default=3, help='Yaratiladigan kategoriyalar soni')
+        parser.add_argument('--products', type=int, default=10, help='Yaratiladigan mahsulotlar soni')
+        parser.add_argument('--orders', type=int, default=15, help='Yaratiladigan buyurtmalar soni')
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Starting to generate test data...'))
+        self.stdout.write(self.style.SUCCESS('Test ma\'lumotlarini yaratish boshlandi...'))
 
-        # Create languages
+        # Tillarni yaratish
         languages = []
         language_data = [
             {'code': 'uz', 'name': 'O\'zbekcha'},
@@ -33,9 +36,9 @@ class Command(BaseCommand):
             )
             languages.append(language)
             if created:
-                self.stdout.write(self.style.SUCCESS(f'Created language: {language.name}'))
+                self.stdout.write(self.style.SUCCESS(f'Yangi til yaratildi: {language.name}'))
 
-        # Create telegram users
+        # Telegram foydalanuvchilarini yaratish
         users = []
         for _ in range(options['users']):
             user = TelegramUser.objects.create(
@@ -47,9 +50,9 @@ class Command(BaseCommand):
                 is_active=True
             )
             users.append(user)
-            self.stdout.write(self.style.SUCCESS(f'Created telegram user: {user.username}'))
+            self.stdout.write(self.style.SUCCESS(f'Telegram foydalanuvchisi yaratildi: {user.username}'))
 
-        # Create categories
+        # Kategoriyalarni yaratish
         categories = []
         category_names = [
             {'uz': 'Burgerlar', 'ru': 'Бургеры'},
@@ -65,9 +68,9 @@ class Command(BaseCommand):
                 image='categories/default.jpg'
             )
             categories.append(category)
-            self.stdout.write(self.style.SUCCESS(f'Created category: {category.name_uz}'))
+            self.stdout.write(self.style.SUCCESS(f'Kategoriya yaratildi: {category.name_uz}'))
 
-        # Create products
+        # Mahsulotlarni yaratish
         products = []
         product_names = [
             {'uz': 'Gamburger', 'ru': 'Гамбургер'},
@@ -92,9 +95,9 @@ class Command(BaseCommand):
                 is_available=random.choice([True, False])
             )
             products.append(product)
-            self.stdout.write(self.style.SUCCESS(f'Created product: {product.name_uz}'))
+            self.stdout.write(self.style.SUCCESS(f'Mahsulot yaratildi: {product.name_uz}'))
 
-        # Create orders
+        # Buyurtmalarni yaratish
         order_statuses = ['pending', 'processing', 'delivering', 'delivered', 'cancelled']
         for _ in range(options['orders']):
             order = Order.objects.create(
@@ -104,7 +107,7 @@ class Command(BaseCommand):
                 created_at=timezone.now() - timedelta(days=random.randint(0, 30))
             )
 
-            # Create order items
+            # Buyurtma elementlarini yaratish
             num_items = random.randint(1, 5)
             total_price = 0
             for _ in range(num_items):
@@ -121,6 +124,6 @@ class Command(BaseCommand):
 
             order.total_price = total_price
             order.save()
-            self.stdout.write(self.style.SUCCESS(f'Created order #{order.id}'))
+            self.stdout.write(self.style.SUCCESS(f'Buyurtma yaratildi #{order.id}'))
 
-        self.stdout.write(self.style.SUCCESS('Successfully generated test data!')) 
+        self.stdout.write(self.style.SUCCESS('Test ma\'lumotlari muvaffaqiyatli yaratildi!')) 

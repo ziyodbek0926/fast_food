@@ -13,23 +13,22 @@ from core.models import Category, Product, TelegramUser, Order, OrderItem, Langu
 from django.db.models import Q
 from asgiref.sync import sync_to_async
 
-# Configure logging
+# Logging sozlamalari - xatoliklarni kuzatish uchun
 logging.basicConfig(level=logging.INFO)
 
-# Load environment variables with override=True to ensure we get the latest values
+# Muhit o'zgaruvchilarini yangi qiymatlar bilan yuklash
 load_dotenv(override=True)
 
-# Get the bot token from environment variables
+# Bot tokenini muhit o'zgaruvchilaridan olish
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-# print(BOT_TOKEN)
 if not BOT_TOKEN:
-    logging.error("BOT_TOKEN not found in environment variables. Please check your .env file.")
+    logging.error("BOT_TOKEN muhit o'zgaruvchilarida topilmadi. .env faylini tekshiring.")
     sys.exit(1)
 
-# Initialize bot and dispatche
+# Bot va dispatcher ni ishga tushirish
 dp = Dispatcher()
 
-# Language selection keyboard
+# Til tanlash klaviaturasini yaratish - foydalanuvchiga til tanlash imkoniyatini beradi
 def get_language_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -39,7 +38,7 @@ def get_language_keyboard():
     ])
     return keyboard
 
-# Main menu keyboards for different languages
+# Har xil tillar uchun asosiy menyu klaviaturalari - foydalanuvchi interfeysini yaratish
 def get_main_keyboard(lang):
     if lang == 'uz':
         keyboard = ReplyKeyboardMarkup(
@@ -62,7 +61,7 @@ def get_main_keyboard(lang):
 
     return keyboard
 
-# Welcome messages in different languages
+# Har xil tillardagi xush kelibsiz xabarlari - foydalanuvchiga dastur haqida ma'lumot berish
 WELCOME_MESSAGES = {
     'uz': (
         "🍽️ Fast Food Botga xush kelibsiz!\n\n"
@@ -84,25 +83,25 @@ WELCOME_MESSAGES = {
     )
 }
 
-# Menu messages in different languages
+# Har xil tillardagi menyu xabarlari - menyu yuklanishini bildirish
 MENU_MESSAGES = {
     'uz': "Menyu ko'rsatilmoqda...",
     'ru': "Меню загружается..."
 }
 
-# Order messages in different languages
+# Har xil tillardagi buyurtma xabarlari - buyurtma jarayonini bildirish
 ORDER_MESSAGES = {
     'uz': "Buyurtma berish jarayoni boshlanmoqda...",
     'ru': "Процесс оформления заказа начинается..."
 }
 
-# Status messages in different languages
+# Har xil tillardagi holat xabarlari - buyurtma holatini tekshirish
 STATUS_MESSAGES = {
     'uz': "Buyurtma holati tekshirilmoqda...",
     'ru': "Проверка статуса заказа..."
 }
 
-# Contact messages in different languages
+# Har xil tillardagi aloqa xabarlari - aloqa ma'lumotlarini ko'rsatish
 CONTACT_MESSAGES = {
     'uz': (
         "📞 Aloqa ma'lumotlari:\n\n"
@@ -118,15 +117,16 @@ CONTACT_MESSAGES = {
     )
 }
 
-# Store user language preferences
+# Foydalanuvchi til sozlamalarini saqlash - har bir foydalanuvchi uchun tanlangan tilni saqlash
 user_languages = {}
 
-# Store user's cart data
+# Foydalanuvchi savat ma'lumotlarini saqlash - har bir foydalanuvchi uchun savatdagi mahsulotlarni saqlash
 user_carts = {}
 
-# Store user's order state
+# Foydalanuvchi buyurtma holatini saqlash - har bir foydalanuvchi uchun buyurtma jarayonini kuzatish
 user_order_states = {}
 
+# /start buyrug'ini qayta ishlash - foydalanuvchi botni ishga tushganda
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     start_message = (
@@ -134,28 +134,29 @@ async def cmd_start(message: types.Message):
     )
     await message.answer(start_message, reply_markup=get_language_keyboard())
 
+# Til tanlashni qayta ishlash - foydalanuvchi tilni o'zgartirganda
 @dp.callback_query(lambda c: c.data.startswith('lang_'))
 async def process_language_selection(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     lang = callback_query.data.split('_')[1]
     
     try:
-        # Update user's language in database
+        # Foydalanuvchi tilini ma'lumotlar bazasida yangilash
         user = await TelegramUser.objects.aget(user_id=user_id)
         language = await Language.objects.aget(code=lang)
         user.language = language
         await user.asave()
         
-        # Update language in memory
+        # Tilni xotiraga saqlash
         user_languages[user_id] = lang
         
-        # Send confirmation message in new language
+        # Yangi tilda tasdiqlash xabarini yuborish
         if lang == 'uz':
             text = "✅ Til muvaffaqiyatli o'zgartirildi!"
         else:
             text = "✅ Язык успешно изменен!"
         
-        # Update the message with new keyboard
+        # Xabarni yangi klaviatura bilan yangilash
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(
@@ -171,14 +172,14 @@ async def process_language_selection(callback_query: types.CallbackQuery):
         
         await callback_query.message.edit_text(text, reply_markup=keyboard)
         
-        # Send main menu in new language
+        # Yangi tilda asosiy menyuni yuborish
         await callback_query.message.answer(
             "Bosh menyu:" if lang == 'uz' else "Главное меню:",
             reply_markup=get_main_keyboard(lang)
         )
         
     except Exception as e:
-        logging.error(f"Error changing language: {str(e)}")
+        logging.error(f"Tilni o'zgartirishda xatolik: {str(e)}")
         if lang == 'uz':
             text = "❌ Xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
         else:
@@ -187,18 +188,19 @@ async def process_language_selection(callback_query: types.CallbackQuery):
     
     await callback_query.answer()
 
+# Kategoriyalar klaviaturasini yaratish - mahsulot kategoriyalarini ko'rsatish uchun
 def get_categories_keyboard(categories, lang_code, show_back=False):
     builder = InlineKeyboardBuilder()
     
     for category in categories:
-        # Use the appropriate name based on language
+        # Tilga qarab mos nomni ishlatish
         name = category.name_uz if lang_code == "uz" else category.name_ru
         builder.add(InlineKeyboardButton(
             text=name,
             callback_data=f"category_{category.id}"
         ))
     
-    # Add back button only if show_back is True
+    # Orqaga tugmasini faqat show_back=True bo'lganda qo'shish
     if show_back:
         if lang_code == "uz":
             builder.add(InlineKeyboardButton(
@@ -211,21 +213,22 @@ def get_categories_keyboard(categories, lang_code, show_back=False):
                 callback_data="back_to_menu"
             ))
     
-    builder.adjust(2)  # Arrange buttons in 2 columns
+    builder.adjust(2)  # Tugmalarni 2 ustunda joylashtirish
     return builder.as_markup()
 
+# Mahsulotlar klaviaturasini yaratish - kategoriyadagi mahsulotlarni ko'rsatish uchun
 def get_products_keyboard(products, lang_code):
     builder = InlineKeyboardBuilder()
     
     for product in products:
-        # Use the appropriate name based on language
+        # Tilga qarab mos nomni ishlatish
         name = product.name_uz if lang_code == "uz" else product.name_ru
         builder.add(InlineKeyboardButton(
             text=name,
             callback_data=f"product_{product.id}"
         ))
     
-    # Add back button
+    # Orqaga tugmasini qo'shish
     if lang_code == "uz":
         builder.add(InlineKeyboardButton(
             text="⬅️ Orqaga",
@@ -237,9 +240,10 @@ def get_products_keyboard(products, lang_code):
             callback_data="back_to_categories"
         ))
     
-    builder.adjust(2)  # Arrange buttons in 2 columns
+    builder.adjust(2)  # Tugmalarni 2 ustunda joylashtirish
     return builder.as_markup()
 
+# Asosiy menyuni qayta ishlash - foydalanuvchi asosiy menyuga qaytganda
 @dp.message(F.text.in_(["/start", "🏠 Bosh menyu", "🏠 Главное меню"]))
 async def handle_menu(message: types.Message):
     user_id = message.from_user.id
@@ -284,7 +288,7 @@ async def handle_menu(message: types.Message):
                 callback_data=f"category_{category.id}"
             ))
     
-    # Send message based on language
+    # Tilga qarab xabar yuborish
     if language == 'uz':
         text = "Kategoriyalardan birini tanlang:"
     else:
@@ -296,11 +300,11 @@ async def handle_menu(message: types.Message):
 async def handle_category(callback_query: types.CallbackQuery):
     category_id = int(callback_query.data.split("_")[1])
     
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
 
     try:
-        # Get category and its products using sync_to_async
+        # Kategoriya va uning mahsulotlarini sync_to_async yordamida olish
         get_category = sync_to_async(Category.objects.get)
         get_products = sync_to_async(lambda: list(Product.objects.filter(category_id=category_id, is_available=True)))
         
@@ -313,55 +317,51 @@ async def handle_category(callback_query: types.CallbackQuery):
             else:
                 text = f"В категории {category.name_ru} пока нет доступных продуктов."
             
-            # Check if the message is a photo message
+            # Xabar rasmlar bilan bo'lsa
             if callback_query.message.photo:
-                # For photo messages, send a new message instead of editing
+                # Rasmlar bilan xabarlar uchun yangi xabar yuborish
                 await callback_query.message.answer(text)
             else:
-                # For text messages, edit the existing message
+                # Matnli xabarlar uchun mavjud xabarni o'zgartirish
                 await callback_query.message.edit_text(text)
             return
 
-        # Create keyboard based on language
+        # Tilga qarab klaviaturani yaratish
         keyboard = get_products_keyboard(products, lang_code)
 
-        # Send message based on language
+        # Tilga qarab xabar yuborish
         if lang_code == "uz":
             text = f"{category.name_uz} kategoriyasidagi mahsulotlar:"
         else:
             text = f"Продукты категории {category.name_ru}:"
         
-        # Check if the message is a photo message
+        # Xabar rasmlar bilan bo'lsa
         if callback_query.message.photo:
-            # For photo messages, send a new message instead of editing
+            # Rasmlar bilan xabarlar uchun yangi xabar yuborish
             await callback_query.message.answer(text, reply_markup=keyboard)
         else:
-            # For text messages, edit the existing message
+            # Matnli xabarlar uchun mavjud xabarni o'zgartirish
             await callback_query.message.edit_text(text, reply_markup=keyboard)
             
         await callback_query.answer()
         
-        # Delete the message immediat
-        # await asyncio.sleep(7)
-        # await callback_query.message.delete()
     except Exception as e:
-        logging.error(f"Error in handle_category: {str(e)}")
+        logging.error(f"Kategoriyani qayta ishlashda xatolik: {str(e)}")
         if lang_code == "uz":
             await callback_query.message.edit_text("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
         else:
             await callback_query.message.edit_text("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
         await callback_query.answer()
 
-
 @dp.callback_query(lambda c: c.data in ["back_to_products"])
 async def handle_back(callback_query: types.CallbackQuery, bot: Bot):
     category_id = int(1)
     
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
 
     try:
-        # Get category and its products using sync_to_async
+        # Kategoriya va uning mahsulotlarini sync_to_async yordamida olish
         get_category = sync_to_async(Category.objects.get)
         get_products = sync_to_async(lambda: list(Product.objects.filter(category_id=category_id, is_available=True)))
         
@@ -374,47 +374,46 @@ async def handle_back(callback_query: types.CallbackQuery, bot: Bot):
             else:
                 text = f"В категории {category.name_ru} пока нет доступных продуктов."
             
-            # Check if the message is a photo message
+            # Xabar rasmlar bilan bo'lsa
             if callback_query.message.photo:
-                # For photo messages, send a new message instead of editing
+                # Rasmlar bilan xabarlar uchun yangi xabar yuborish
                 await callback_query.message.answer(text)
             else:
-                # For text messages, edit the existing message
+                # Matnli xabarlar uchun mavjud xabarni o'zgartirish
                 await callback_query.message.edit_text(text)
             return
 
-        # Create keyboard based on language
+        # Tilga qarab klaviaturani yaratish
         keyboard = get_products_keyboard(products, lang_code)
 
-        # Send message based on language
+        # Tilga qarab xabar yuborish
         if lang_code == "uz":
             text = f"{category.name_uz} kategoriyasidagi mahsulotlar:"
         else:
             text = f"Продукты категории {category.name_ru}:"
         await callback_query.message.delete()
-        # Check if the message is a photo message
+        # Xabar rasmlar bilan bo'lsa
         if callback_query.message.photo:
-            # For photo messages, send a new message instead of editing
+            # Rasmlar bilan xabarlar uchun yangi xabar yuborish
             await callback_query.message.answer(text, reply_markup=keyboard)
         else:
-            # For text messages, edit the existing message
+            # Matnli xabarlar uchun mavjud xabarni o'zgartirish
             await callback_query.message.edit_text(text, reply_markup=keyboard)
             
         await callback_query.answer()
-        # await callback_query.message.delete()
     except Exception as e:
-        logging.error(f"Error in handle_back: {str(e)}")
+        logging.error(f"Orqaga qaytishda xatolik: {str(e)}")
         if lang_code == "uz":
             error_text = "Xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
         else:
             error_text = "Произошла ошибка. Пожалуйста, попробуйте еще раз."
             
-        # Check if the message is a photo message
+        # Xabar rasmlar bilan bo'lsa
         if callback_query.message.photo:
-            # For photo messages, send a new message instead of editing
+            # Rasmlar bilan xabarlar uchun yangi xabar yuborish
             await callback_query.message.answer(error_text)
         else:
-            # For text messages, edit the existing message
+            # Matnli xabarlar uchun mavjud xabarni o'zgartirish
             await callback_query.message.edit_text(error_text)
             
         await callback_query.answer()
@@ -424,7 +423,7 @@ async def handle_cart(message: types.Message):
     user_id = message.from_user.id
     language = user_languages.get(user_id, 'uz')
     
-    # Check if cart exists and has items
+    # Savat mavjudligini va unda mahsulotlar borligini tekshirish
     if user_id not in user_carts or not user_carts[user_id]:
         if language == 'uz':
             await message.answer("Savat bo'sh")
@@ -432,11 +431,11 @@ async def handle_cart(message: types.Message):
             await message.answer("Корзина пуста")
         return
     
-    # Calculate total and format cart items
+    # Jami summani hisoblash va savat mahsulotlarini formatlash
     total = 0
     text = "🛒 Savatingiz:\n\n" if language == 'uz' else "🛒 Ваша корзина:\n\n"
     
-    # Group identical items and calculate their totals
+    # Bir xil mahsulotlarni guruhlash va ularning jami summasini hisoblash
     for item in user_carts[user_id]:
         product_name = item['name_uz'] if language == 'uz' else item['name_ru']
         item_total = item['price'] * item['quantity']
@@ -445,7 +444,7 @@ async def handle_cart(message: types.Message):
     
     text += f"\nJami: {total:,.2f} so'm"
     
-    # Create keyboard with action buttons
+    # Amallar tugmalari bilan klaviaturani yaratish
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -527,14 +526,12 @@ async def handle_contact_info(message: types.Message):
     
     await message.answer(contact_info)
 
-
 @dp.message(lambda message: message.text in ["🌐 Tilni o'zgartirish", "🌐 Сменить язык"])
 async def handler_lang(message: types.Message):
     start_message = (
         "🌐 Tilni tanlang / Выберите язык "
     )
     await message.answer(start_message, reply_markup=get_language_keyboard())
-
 
 @dp.callback_query(F.data == "settings")
 async def handle_settings(callback: types.CallbackQuery):
@@ -590,10 +587,10 @@ async def handle_back_to_menu(callback: types.CallbackQuery):
 
 @dp.message(lambda message: message.text in ["🍔 Menyu", "🍔 Меню"])
 async def handle_menu(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
 
-    # Get all categories
+    # Barcha kategoriyalarni olish
     categories = await sync_to_async(list)(Category.objects.all())
 
     if not categories:
@@ -603,10 +600,10 @@ async def handle_menu(message: types.Message):
             await message.answer("Пока нет доступных категорий.")
         return
 
-    # Create keyboard based on language with show_back=False for main menu
+    # Asosiy menyu uchun show_back=False bilan tilga qarab klaviaturani yaratish
     keyboard = get_categories_keyboard(categories, lang_code, show_back=False)
 
-    # Send message based on language
+    # Tilga qarab xabar yuborish
     if lang_code == "uz":
         text = "Kategoriyalardan birini tanlang:"
     else:
@@ -618,13 +615,13 @@ async def handle_menu(message: types.Message):
 async def handle_product_callback(callback_query: types.CallbackQuery):
     product_id = int(callback_query.data.split("_")[1])
     
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
 
-    # Get product details
+    # Mahsulot ma'lumotlarini olish
     product = await sync_to_async(Product.objects.get)(id=product_id)
     
-    # Format message based on language
+    # Tilga qarab xabarni formatlash
     if lang_code == "uz":
         text = (
             f"<b>{product.name_uz}</b>\n\n"
@@ -638,7 +635,7 @@ async def handle_product_callback(callback_query: types.CallbackQuery):
             f"Цена: {product.price} сум"
         )
 
-    # Create keyboard with add to cart and back buttons
+    # Savatga qo'shish va orqaga tugmalari bilan klaviaturani yaratish
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -654,13 +651,13 @@ async def handle_product_callback(callback_query: types.CallbackQuery):
         ]
     ])
 
-    # Delete the previous products list message
+    # Oldingi mahsulotlar ro'yxati xabarini o'chirish
     await callback_query.message.delete()
 
-    # Send product details with photo if available
+    # Mahsulot ma'lumotlarini rasmi bilan yuborish
     if product.image and product.image.url:
         try:
-            # Get the full URL by combining MEDIA_URL and image path
+            # MEDIA_URL va rasm yo'lini birlashtirib to'liq URL ni olish
             # image_url = f"{settings.DOMAIN}{product.image.url}"
             photo = FSInputFile(f'/home/ziko2/Desktop/fast_food/img/{product.name_uz}.jpg')
             await callback_query.message.answer_photo(
@@ -670,7 +667,7 @@ async def handle_product_callback(callback_query: types.CallbackQuery):
                 parse_mode="HTML"
             )
         except Exception as e:
-            # If there's an error with the image, just send the text
+            # Agar rasm bilan bog'liq xatolik bo'lsa, faqat matnni yuborish
             print(e)
             await callback_query.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
     else:
@@ -680,16 +677,16 @@ async def handle_product_callback(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data in ["back_to_menu", "back_to_categories"])
 async def handle_back(callback_query: types.CallbackQuery):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
 
-    # Get active categories
+    # Faol kategoriyalarni olish
     categories = await sync_to_async(list)(Category.objects.all())
 
-    # Create keyboard based on language
+    # Tilga qarab klaviaturani yaratish
     keyboard = get_categories_keyboard(categories, lang_code)
 
-    # Send message based on language
+    # Tilga qarab xabar yuborish
     if lang_code == "uz":
         text = "Kategoriyalardan birini tanlang:"
     else:
@@ -700,17 +697,17 @@ async def handle_back(callback_query: types.CallbackQuery):
 
 @dp.message(lambda message: message.text in ["🛒 Buyurtma", "🛒 Заказать", "🛒 Order"])
 async def handle_order(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
 
-    # Initialize cart if not exists
+    # Agar savat mavjud bo'lmasa, yangi savat yaratish
     if message.from_user.id not in user_carts:
         user_carts[message.from_user.id] = []
 
-    # Set order state to 'phone'
+    # Buyurtma holatini 'phone' ga o'rnatish
     user_order_states[message.from_user.id] = 'phone'
 
-    # Create keyboard with contact sharing button
+    # Raqamni ulashish tugmasi bilan klaviaturani yaratish
     contact_keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(
@@ -722,7 +719,7 @@ async def handle_order(message: types.Message):
         one_time_keyboard=True
     )
 
-    # Ask for phone number with contact sharing button
+    # Raqamni ulashish tugmasi bilan telefon raqamini so'rash
     if lang_code == "uz":
         text = "Iltimos, telefon raqamingizni yuboring:"
     else:
@@ -732,22 +729,22 @@ async def handle_order(message: types.Message):
 
 @dp.message(lambda message: message.contact is not None or message.text or message.location)
 async def handle_order_info(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
     user_id = message.from_user.id
 
-    # Check if user is in order process
+    # Foydalanuvchi buyurtma jarayonida ekanligini tekshirish
     if user_id not in user_order_states:
         return
 
     state = user_order_states[user_id]
 
     if state == 'phone':
-        # Check if message contains contact info
+        # Xabar aloqa ma'lumotlarini o'z ichiga olganligini tekshirish
         if message.contact is not None:
             phone = message.contact.phone_number
         else:
-            # Validate manually entered phone number
+            # Qo'lda kiritilgan telefon raqamini tekshirish
             phone = message.text.strip()
             if not phone.isdigit() or len(phone) < 9:
                 if lang_code == "uz":
@@ -756,11 +753,11 @@ async def handle_order_info(message: types.Message):
                     await message.answer("Пожалуйста, введите правильный номер телефона или нажмите кнопку 'Поделиться номером'!")
                 return
 
-        # Store phone number and ask for address
+        # Telefon raqamini saqlash va manzilni so'rash
         user_order_states[f"{user_id}_phone"] = phone
         user_order_states[user_id] = 'address'
         
-        # Create keyboard with location sharing button
+        # Joylashuvni ulashish tugmasi bilan klaviaturani yaratish
         location_keyboard = ReplyKeyboardMarkup(
             keyboard=[
                 [KeyboardButton(
@@ -779,7 +776,7 @@ async def handle_order_info(message: types.Message):
         await message.answer(text, reply_markup=location_keyboard)
 
     elif state == 'address':
-        # Store address and ask for comment
+        # Manzilni saqlash va izoh so'rash
         if message.location:
             address = f"Location: {message.location.latitude}, {message.location.longitude}"
         else:
@@ -794,9 +791,9 @@ async def handle_order_info(message: types.Message):
         await message.answer(text, reply_markup=get_main_keyboard(lang_code))
 
     elif state == 'comment':
-        # Create order
+        # Buyurtmani yaratish
         try:
-            # Get or create user
+            # Foydalanuvchini olish yoki yaratish
             user, created = await sync_to_async(TelegramUser.objects.get_or_create)(
                 user_id=user_id,
                 defaults={
@@ -807,7 +804,7 @@ async def handle_order_info(message: types.Message):
                 }
             )
             
-            # Create order
+            # Buyurtmani yaratish
             order = await sync_to_async(Order.objects.create)(
                 user=user,
                 phone_number=user_order_states.get(f"{user_id}_phone", ""),
@@ -816,7 +813,7 @@ async def handle_order_info(message: types.Message):
                 total_price=sum(item['price'] * item['quantity'] for item in user_carts[user_id])
             )
 
-            # Create order items
+            # Buyurtma elementlarini yaratish
             for item in user_carts[user_id]:
                 await sync_to_async(OrderItem.objects.create)(
                     order=order,
@@ -825,7 +822,7 @@ async def handle_order_info(message: types.Message):
                     price=item['price']
                 )
 
-            # Clear cart and order state
+            # Savat va buyurtma holatini tozalash
             del user_carts[user_id]
             del user_order_states[user_id]
 
@@ -845,7 +842,7 @@ async def handle_order_info(message: types.Message):
             await message.answer(text, reply_markup=get_main_keyboard(lang_code))
 
         except Exception as e:
-            logging.error(f"Error creating order: {str(e)}")
+            logging.error(f"Buyurtma yaratishda xatolik: {str(e)}")
             if lang_code == "uz":
                 text = f"Xatolik yuz berdi: {str(e)}. Iltimos, qayta urinib ko'ring."
             else:
@@ -854,12 +851,12 @@ async def handle_order_info(message: types.Message):
 
 @dp.message(lambda message: message.text in ["📍 Buyurtma holati", "📍 Статус заказа", "📍 Order Status"])
 async def handle_status(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
     user_id = message.from_user.id
 
     try:
-        # Get user's last order
+        # Foydalanuvchining oxirgi buyurtmasini olish
         user = await sync_to_async(TelegramUser.objects.get)(user_id=user_id)
         order = await sync_to_async(Order.objects.filter(user=user).order_by('-created_at').first)()
 
@@ -871,7 +868,7 @@ async def handle_status(message: types.Message):
             await message.answer(text)
             return
 
-        # Format status message
+        # Holat xabarini formatlash
         status_messages = {
             'new': {'uz': 'Yangi', 'ru': 'Новый'},
             'confirmed': {'uz': 'Tasdiqlangan', 'ru': 'Подтвержден'},
@@ -923,10 +920,10 @@ async def handle_language_change(message: types.Message):
 
 @dp.message(lambda message: message.text in ["⬅️ Orqaga", "⬅️ Назад", "⬅️ Back"])
 async def handle_back(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
 
-    # Get active categories
+    # Faol kategoriyalarni olish
     categories = Category.objects.filter(is_available=True).all()
 
     if not categories:
@@ -936,10 +933,10 @@ async def handle_back(message: types.Message):
             await message.answer("Пока нет доступных категорий.")
         return
 
-    # Create keyboard based on language
+    # Tilga qarab klaviaturani yaratish
     keyboard = get_categories_keyboard(categories, lang_code)
 
-    # Send message based on language
+    # Tilga qarab xabar yuborish
     if lang_code == "uz":
         text = "Kategoriyalardan birini tanlang:"
     else:
@@ -949,14 +946,14 @@ async def handle_back(message: types.Message):
 
 @dp.message()
 async def handle_category(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
 
-    # Check if user is in order process
+    # Foydalanuvchi buyurtma jarayonida ekanligini tekshirish
     if message.from_user.id in user_order_states:
         return
 
-    # Try to find category by name in both languages
+    # Har ikkala tilda kategoriya nomini qidirish
     category = await sync_to_async(Category.objects.filter(
         Q(name_uz=message.text) | Q(name_ru=message.text)
     ).first)()
@@ -968,7 +965,7 @@ async def handle_category(message: types.Message):
             await message.answer("Категория не найдена.")
         return
 
-    # Get products for this category
+    # Bu kategoriya uchun mahsulotlarni olish
     products = await sync_to_async(list)(Product.objects.filter(category=category))
 
     if not products:
@@ -978,10 +975,10 @@ async def handle_category(message: types.Message):
             await message.answer("В этой категории нет товаров.")
         return
 
-    # Create keyboard based on language
+    # Tilga qarab klaviaturani yaratish
     keyboard = get_products_keyboard(products, lang_code)
 
-    # Send message based on language
+    # Tilga qarab xabar yuborish
     if lang_code == "uz":
         text = "Mahsulotlardan birini tanlang:"
     else:
@@ -991,10 +988,10 @@ async def handle_category(message: types.Message):
 
 @dp.message()
 async def handle_product(message: types.Message):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(message.from_user.id, 'uz')
 
-    # Try to find product by name in both languages
+    # Har ikkala tilda mahsulot nomini qidirish
     product = await sync_to_async(Product.objects.filter(
         Q(name_uz=message.text) | Q(name_ru=message.text)
     ).first)()
@@ -1006,14 +1003,14 @@ async def handle_product(message: types.Message):
             await message.answer("Товар не найден.")
         return
 
-    # Get product details based on language
+    # Tilga qarab mahsulot ma'lumotlarini olish
     if lang_code == "uz":
         text = f"<b>{product.name_uz}</b>\n\n{product.description_uz}\n\nNarxi: {product.price} so'm"
         print("slkdfjskldfjks")
     else:
         text = f"<b>{product.name_ru}</b>\n\n{product.description_ru}\n\nЦена: {product.price} сум"
 
-    # Create keyboard with add to cart and back buttons
+    # Savatga qo'shish va orqaga tugmalari bilan klaviaturani yaratish
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -1029,10 +1026,10 @@ async def handle_product(message: types.Message):
         ]
     ])
 
-    # Send product details with photo if available
+    # Mahsulot ma'lumotlarini rasmi bilan yuborish
     if product.image and product.image.url:
         try:
-            # Get the full URL by combining MEDIA_URL and image path
+            # MEDIA_URL va rasm yo'lini birlashtirib to'liq URL ni olish
             # image_url = f"{settings.DOMAIN}{product.image.url}"
             photo = FSInputFile(f'/home/ziko2/Desktop/fast_food/img/{product.name_uz}.jpg')
             await message.answer_photo(
@@ -1042,7 +1039,7 @@ async def handle_product(message: types.Message):
                 parse_mode="HTML"
             )
         except Exception as e:
-            # If there's an error with the image, just send the text
+            # Agar rasm bilan bog'liq xatolik bo'lsa, faqat matnni yuborish
             print(e)
             await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
     else:
@@ -1050,28 +1047,28 @@ async def handle_product(message: types.Message):
 
 @dp.callback_query(lambda c: c.data.startswith('add_to_cart_'))
 async def handle_add_to_cart(callback_query: types.CallbackQuery):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
     user_id = callback_query.from_user.id
 
-    # Get product ID from callback data
+    # Callback ma'lumotlaridan mahsulot ID sini olish
     product_id = int(callback_query.data.split('_')[-1])
 
     try:
-        # Get product details
+        # Mahsulot ma'lumotlarini olish
         product = await sync_to_async(Product.objects.get)(id=product_id)
 
-        # Initialize cart if not exists
+        # Agar savat mavjud bo'lmasa, yangi savat yaratish
         if user_id not in user_carts:
             user_carts[user_id] = []
 
-        # Check if product already exists in cart
+        # Mahsulot allaqachon savatda borligini tekshirish
         for item in user_carts[user_id]:
             if item['product_id'] == product.id:
                 item['quantity'] += 1
                 break
         else:
-            # Add new product to cart if not found
+            # Agar mahsulot topilmasa, yangi mahsulotni savatga qo'shish
             user_carts[user_id].append({
                 'product_id': product.id,
                 'name_uz': product.name_uz,
@@ -1080,7 +1077,7 @@ async def handle_add_to_cart(callback_query: types.CallbackQuery):
                 'quantity': 1
             })
 
-        # Create cart keyboard
+        # Savat klaviaturasini yaratish
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [
                 InlineKeyboardButton(
@@ -1103,25 +1100,25 @@ async def handle_add_to_cart(callback_query: types.CallbackQuery):
         else:
             text = f"{product.name_ru} добавлен в корзину!"
 
-        # Check if the message is a photo message
+        # Xabar rasmlar bilan bo'lsa
         if callback_query.message.photo:
-            # For photo messages, send a new message instead of editing
+            # Rasmlar bilan xabarlar uchun yangi xabar yuborish
             await callback_query.message.answer(text, reply_markup=keyboard)
         else:
-            # For text messages, edit the existing message
+            # Matnli xabarlar uchun mavjud xabarni o'zgartirish
             await callback_query.message.edit_text(text, reply_markup=keyboard)
             
         await callback_query.answer()
     except Exception as e:
-        logging.error(f"Error adding to cart: {str(e)}")
+        logging.error(f"Savatga qo'shishda xatolik: {str(e)}")
         if lang_code == "uz":
-            # For photo messages, send a new message instead of editing
+            # Rasmlar bilan xabarlar uchun yangi xabar yuborish
             if callback_query.message.photo:
                 await callback_query.message.answer("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
             else:
                 await callback_query.message.edit_text("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
         else:
-            # For photo messages, send a new message instead of editing
+            # Rasmlar bilan xabarlar uchun yangi xabar yuborish
             if callback_query.message.photo:
                 await callback_query.message.answer("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
             else:
@@ -1129,11 +1126,11 @@ async def handle_add_to_cart(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data == "view_cart")
 async def handle_view_cart(callback_query: types.CallbackQuery):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
     user_id = callback_query.from_user.id
 
-    # Check if cart is empty
+    # Savat bo'shligini tekshirish
     if user_id not in user_carts or not user_carts[user_id]:
         if lang_code == "uz":
             text = "Savat bo'sh!"
@@ -1143,10 +1140,10 @@ async def handle_view_cart(callback_query: types.CallbackQuery):
         await callback_query.answer()
         return
 
-    # Calculate total
+    # Jami summani hisoblash
     total = sum(item['price'] * item['quantity'] for item in user_carts[user_id])
 
-    # Format cart items
+    # Savat elementlarini formatlash
     if lang_code == "uz":
         text = "🛒 Savatingiz:\n\n"
         for item in user_carts[user_id]:
@@ -1158,7 +1155,7 @@ async def handle_view_cart(callback_query: types.CallbackQuery):
             text += f"{item['name_ru']} x {item['quantity']} = {item['price'] * item['quantity']} сум\n"
         text += f"\nИтого: {total} сум"
 
-    # Create cart keyboard
+    # Savat klaviaturasini yaratish
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -1185,11 +1182,11 @@ async def handle_view_cart(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data == "clear_cart")
 async def handle_clear_cart(callback_query: types.CallbackQuery):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
     user_id = callback_query.from_user.id
 
-    # Clear cart
+    # Savatni tozalash
     if user_id in user_carts:
         del user_carts[user_id]
 
@@ -1203,11 +1200,11 @@ async def handle_clear_cart(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data == "checkout")
 async def handle_checkout(callback_query: types.CallbackQuery):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
     user_id = callback_query.from_user.id
 
-    # Check if cart is empty
+    # Savat bo'shligini tekshirish
     if user_id not in user_carts or not user_carts[user_id]:
         if lang_code == "uz":
             text = "Savat bo'sh!"
@@ -1217,10 +1214,10 @@ async def handle_checkout(callback_query: types.CallbackQuery):
         await callback_query.answer()
         return
 
-    # Set order state to 'phone'
+    # Buyurtma holatini 'phone' ga o'rnatish
     user_order_states[user_id] = 'phone'
 
-    # Create keyboard with contact sharing button
+    # Raqamni ulashish tugmasi bilan klaviaturani yaratish
     contact_keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(
@@ -1232,7 +1229,7 @@ async def handle_checkout(callback_query: types.CallbackQuery):
         one_time_keyboard=True
     )
 
-    # Ask for phone number with contact sharing button
+    # Raqamni ulashish tugmasi bilan telefon raqamini so'rash
     if lang_code == "uz":
         text = "Iltimos, telefon raqamingizni yuboring:"
     else:
@@ -1243,11 +1240,11 @@ async def handle_checkout(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data == "back_to_categories")
 async def handle_back_to_categories(callback_query: types.CallbackQuery):
-    # Get user's language from memory or default to 'uz'
+    # Foydalanuvchi tilini xotira yoki standart 'uz' dan olish
     lang_code = user_languages.get(callback_query.from_user.id, 'uz')
 
     try:
-        # Get all categories
+        # Barcha kategoriyalarni olish
         categories = await sync_to_async(list)(Category.objects.all())
 
         if not categories:
@@ -1257,10 +1254,10 @@ async def handle_back_to_categories(callback_query: types.CallbackQuery):
                 await callback_query.message.edit_text("Пока нет доступных категорий.")
             return
 
-        # Create keyboard based on language
+        # Tilga qarab klaviaturani yaratish
         keyboard = get_categories_keyboard(categories, lang_code)
 
-        # Send message based on language
+        # Tilga qarab xabar yuborish
         if lang_code == "uz":
             text = "Kategoriyalardan birini tanlang:"
         else:
@@ -1269,7 +1266,7 @@ async def handle_back_to_categories(callback_query: types.CallbackQuery):
         await callback_query.message.edit_text(text, reply_markup=keyboard)
         await callback_query.answer()
     except Exception as e:
-        logging.error(f"Error in back_to_categories: {str(e)}")
+        logging.error(f"Kategoriyalarga qaytishda xatolik: {str(e)}")
         if lang_code == "uz":
             await callback_query.message.edit_text("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
         else:
@@ -1277,27 +1274,27 @@ async def handle_back_to_categories(callback_query: types.CallbackQuery):
         await callback_query.answer()
 
 async def main():
-    logging.info("Starting bot...")
-    # Reload environment variables before starting the bot
+    logging.info("Bot ishga tushirilmoqda...")
+    # Botni ishga tushirishdan oldin muhit o'zgaruvchilarini qayta yuklash
     load_dotenv(override=True)
-    # Get the latest bot token
+    # Eng so'nggi bot tokenini olish
     global bot
     BOT_TOKEN = os.getenv('BOT_TOKEN')
     if not BOT_TOKEN:
-        logging.error("BOT_TOKEN not found in environment variables. Please check your .env file.")
+        logging.error("BOT_TOKEN muhit o'zgaruvchilarida topilmadi. .env faylini tekshiring.")
         return
-    # Create a new bot instance with the latest token
+    # Eng so'nggi token bilan yangi bot instansini yaratish
     bot = Bot(token=BOT_TOKEN)
     await dp.start_polling(bot)
 
 class Command(BaseCommand):
-    help = 'Starts the Telegram bot using aiogram'
+    help = 'aiogram yordamida Telegram botini ishga tushirish'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Starting bot server...'))
+        self.stdout.write(self.style.SUCCESS('Bot serveri ishga tushirilmoqda...'))
         
         try:
             asyncio.run(main())
         except KeyboardInterrupt:
-            self.stdout.write(self.style.SUCCESS('Bot stopped'))
+            self.stdout.write(self.style.SUCCESS('Bot to\'xtatildi'))
             sys.exit(0) 
